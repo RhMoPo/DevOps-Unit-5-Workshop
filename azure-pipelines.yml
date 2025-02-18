@@ -1,19 +1,49 @@
-# Here we specify what causes the pipeline to run; in this case changes to any branch
 trigger:
-- '*'
+  branches:
+    include:
+      - main
+      - develop
 
-# Here we specify what type of machine (agent) to run on
-pool: Default
+pool:
+  vmImage: 'ubuntu-latest'
 
-# And here we specify a list of "jobs"
 jobs:
-  - job: firstJob
-    displayName: "My first Job"
-    # Each job has a sequence of steps to run
+  - job: BuildAndTest
+    displayName: "Build and Test"
     steps:
-      - script: echo "Hello World"
-        displayName: Say Hello
-      - task: Bash@3
+      - checkout: self
+
+      - task: UseDotNet@2
+        displayName: "Setup .NET"
         inputs:
-          targetType: 'inline'
-          script: echo "Hello World (again)"
+          packageType: 'sdk'
+          version: '8.0.404'
+          installationPath: $(Agent.ToolsDirectory)/dotnet
+
+      - script: dotnet restore
+        displayName: "Restore NuGet Packages"
+
+      - script: dotnet build --no-restore
+        displayName: "Build C# Code"
+
+      - script: dotnet test --no-build --verbosity normal
+        displayName: "Run C# Tests"
+
+      - task: NodeTool@0
+        displayName: "Setup Node.js"
+        inputs:
+          versionSpec: '20.18.1'
+
+      - script: |
+          npm install
+          npm run build
+        workingDirectory: DotnetTemplate.Web
+        displayName: "Build TypeScript Code"
+
+      - script: npm run lint
+        workingDirectory: DotnetTemplate.Web
+        displayName: "Lint TypeScript Code"
+
+      - script: npm test
+        workingDirectory: DotnetTemplate.Web
+        displayName: "Run TypeScript Tests"
