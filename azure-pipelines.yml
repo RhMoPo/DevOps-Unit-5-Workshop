@@ -7,43 +7,40 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
-jobs:
-  - job: BuildAndTest
-    displayName: "Build and Test"
-    steps:
-      - checkout: self
+steps:
+  - checkout: self
 
-      - task: UseDotNet@2
-        displayName: "Setup .NET"
-        inputs:
-          packageType: 'sdk'
-          version: '8.0.404'
-          installationPath: $(Agent.ToolsDirectory)/dotnet
+  - task: UseDotNet@2
+    displayName: "Setup .NET"
+    inputs:
+      packageType: 'sdk'
+      version: '8.0.404'
+      installationPath: $(Agent.ToolsDirectory)/dotnet
 
-      - script: dotnet restore
-        displayName: "Restore NuGet Packages"
+  - script: dotnet restore
+    displayName: "Restore NuGet Packages"
 
-      - script: dotnet build --no-restore
-        displayName: "Build C# Code"
+  - script: dotnet build --no-restore
+    displayName: "Build C# Code"
 
-      - script: dotnet test --no-build --verbosity normal
-        displayName: "Run C# Tests"
+  - script: dotnet test --no-build --verbosity normal
+    displayName: "Run C# Tests"
 
-      - task: NodeTool@0
-        displayName: "Setup Node.js"
-        inputs:
-          versionSpec: '20.18.1'
+  - task: NodeTool@0
+    displayName: "Setup Node.js"
+    inputs:
+      versionSpec: '20.18.1'
 
-      - script: |
-          npm install
-          npm run build
-        workingDirectory: DotnetTemplate.Web
-        displayName: "Build TypeScript Code"
+  - script: |
+      npm install
+      npm run build
+    workingDirectory: DotnetTemplate.Web
+    displayName: "Build TypeScript Code"
 
-      - script: npm run lint
-        workingDirectory: DotnetTemplate.Web
-        displayName: "Lint TypeScript Code"
+  - script: npm run lint
+    workingDirectory: DotnetTemplate.Web
+    displayName: "Lint TypeScript Code"
 
-      - script: npm test
-        workingDirectory: DotnetTemplate.Web
-        displayName: "Run TypeScript Tests"
+  - script: npm test
+    workingDirectory: DotnetTemplate.Web
+    displayName: "Run TypeScript Tests"
